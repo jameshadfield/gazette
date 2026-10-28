@@ -1,0 +1,24 @@
+/* Print-only stylesheet for the `pdf` target, linked after gazette.css.
+ *
+ * gazette.css already carries the main print rules (@page size/margins, hiding
+ * the live .gazette-mount and showing the .gazette-static-fallback, break-inside
+ * on figures, neutralized breakout width). This sheet only tidies interactive
+ * chrome that is inert on paper. Everything here is scoped to print so it never
+ * affects the on-screen page if the sheet is ever linked unconditionally.
+ */
+@media print {
+  /* `:trigger` controls drive figures via JS, which never runs in print. Render
+     them as plain emphasized text rather than dead buttons. */
+  .gazette-trigger {
+    appearance: none;
+    -webkit-appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    font-style: italic;
+    cursor: default;
+  }
+}

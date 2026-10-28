@@ -1,0 +1,69 @@
+/* Nunito Sans (SIL Open Font License), a geometric humanist sans in the spirit
+   of Museo Sans. Self-hosted variable font (weight axis 200-1000) so headings
+   render at true weights with no external font dependency. Files in theme/fonts/
+   are the latin + latin-ext subsets (normal + italic) pulled from Google Fonts. */
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("fonts/nunito-sans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("fonts/nunito-sans-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: italic;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("fonts/nunito-sans-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: italic;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("fonts/nunito-sans-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* Primary text-font role: body, headings (h1–h4), author/affiliation
+     superscripts, dates/correspondence, and figure (SVG) plot text. */
+  --serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Secondary font role for labels/code/numerics: the links row, inline
+     <code> and <pre>, table headers and numeric cells, and ref markers. */
+  --mono: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Default foreground: body/wrapper text, heading color, link text (and
+     link hover), and the a:hover underline color. */
+  --ink: #2b2b2b;
+  /* Page background (body); reasserted for the print page. */
+  --paper: #ffffff;
+  /* Muted/secondary ink: author superscripts, affiliations, dates,
+     blockquotes, figcaptions, table headers, ref markers, and the default
+     link-underline color. */
+  --ink-muted: #5c5c5c;
+  /* Stronger ink for emphasis: h4 headings and the bold figure-caption lead-in. */
+  --ink-fill: #000000;
+  /* Hairline color for all borders/rules/dividers (frontmatter, h2 underline,
+     blockquote, hr, pre, table cells, references) and the link separator glyph. */
+  --line: #d1d1d1;
+  /* Subtle tinted fill — inline <code> background and code-fence blocks */
+  --wash: #F5F3EB;
+  /* Background of inline :trigger controls (the borderless prose buttons that
+     drive figures). */
+  --trigger-bg: #EBE1E1;
+
+  /* Max width of the paper column (.gazette-paper); also the effective cap on
+     the width handed to figure render() via the mount. */
+  --max-paper-width: 46rem;
+}

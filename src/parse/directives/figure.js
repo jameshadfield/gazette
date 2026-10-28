@@ -1,0 +1,231 @@
+// Lower `:::figure{#fig:slug}` container directives into the figure scaffold.
+//
+// Identity (`#fig:slug`) stays in the directive attributes; the figure's source
+// and render options are authored as a fenced YAML block tagged with the
+// `gazette` meta marker inside the directive body. A figure is one of two kinds:
+//
+// INTERACTIVE (`component:`) — a .js island hydrated over a static fallback:
+//
+//   :::figure{#fig:demo-trend}
+//   ```yaml gazette
+//   component: trend-line.js      # → figures/trend-line.js
+//   data:                         # → render(container, { key: parsedJson }, opts)
+//     points: demo.json           #   bare name → figures/data/demo.json
+//     colors: palette.json
+//   opts:                         # merged into render opts (after {mode:"inline"})
+//     log: false
+//   ```
+//   **Caption lead-in.** body…
+//   :::
+//
+// STATIC (`image:`) — a plain image, no island/mount/hydration:
+//
+//   :::figure{#fig:static-example}
+//   ```yaml gazette
+//   image: filename.png           # → figures/filename.png
+//   ```
+//   **Caption lead-in.** body…
+//   :::
+//
+// Exactly one of `component` / `image` must be set. An optional `max-width=<n>vw`
+// directive attribute applies to either kind (breakout wider than the column).
+//
+// The YAML is parsed with js-yaml's JSON_SCHEMA so scalar typing matches JSON
+// (no YAML "Norway problem": bare `no`/`on`/dates stay strings; numbers/bools/
+// lists resolve as expected). The block is removed from the body; the remaining
+// prose is the caption.
+//
+// Output HTML — interactive:
+//   <figure id="fig-slug" class="gazette-figure">
+//     <div id="gazette-mount-N" class="gazette-mount"></div>
+//     <img class="gazette-static-fallback" src="figures/slug.png" alt="">
+//     <figcaption><p><span class="gazette-figure-label">Figure N.</span> …</p></figcaption>
+//     <gazette-hydration data-mount="gazette-mount-N"></gazette-hydration>
+//   </figure>
+// Output HTML — static:
+//   <figure id="fig-slug" class="gazette-figure">
+//     <img class="gazette-figure-img" src="figures/filename.png" alt="">
+//     <figcaption><p><span class="gazette-figure-label">Figure N.</span> …</p></figcaption>
+//   </figure>
+import { visit } from "unist-util-visit";
+import yaml from "js-yaml";
+
+// A bare filename resolves under figures/data/; a path with a slash is taken
+// relative to the figures root (e.g. shared/palette.json, lib/foo.json).
+function resolveDataPath(file) {
+  if (file.includes("/")) return `figures/${file.replace(/^\.\//, "")}`;
+  return `figures/data/${file}`;
+}
+
+// Image assets for a static figure resolve relative to the figures root: a bare
+// filename lands in figures/ (alongside components), a path with a slash keeps
+// its subfolders (e.g. img/plot.png → figures/img/plot.png).
+function resolveFigureAsset(file) {
+  return `figures/${file.replace(/^\.\//, "")}`;
+}
+
+const IMAGE_RE = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
+
+function hasGazetteMeta(node) {
+  return (
+    node.type === "code" &&
+    String(node.meta || "")
+      .trim()
+      .split(/\s+/)
+      .includes("gazette")
+  );
+}
+
+export function remarkFigures() {
+  return (tree, file) => {
+    const islands = (file.data.islands ||= []);
+    const figuresBySlug = (file.data.figuresBySlug ||= new Map());
+    let counter = 0;
+
+    visit(tree, (n) => n.type === "containerDirective" && n.name === "figure", (node) => {
+      counter++;
+      const attrs = node.attributes || {};
+      const slug = String(attrs.id || "").replace(/^fig:/, "");
+      const figId = `fig-${slug}`;
+      const mountId = `gazette-mount-${counter}`;
+      const where = `figure #fig:${slug}`;
+
+      // Pull out and parse the `yaml gazette` config block.
+      const blockIndex = node.children.findIndex(hasGazetteMeta);
+      if (blockIndex < 0) {
+        throw new Error(`${where}: missing a \`\`\`yaml gazette config block`);
+      }
+      let config;
+      try {
+        config = yaml.load(node.children[blockIndex].value, { schema: yaml.JSON_SCHEMA }) || {};
+      } catch (err) {
+        throw new Error(`${where}: invalid gazette YAML block — ${err.message}`);
+      }
+      node.children.splice(blockIndex, 1);
+
+      // A figure is either INTERACTIVE (`component:` — a .js island hydrated over
+      // a static fallback) or STATIC (`image:` — a plain image, no island/mount).
+      // Exactly one of the two keys must be set.
+      const hasComponent = typeof config.component === "string" && config.component;
+      const hasImage = typeof config.image === "string" && config.image;
+      if (hasComponent && hasImage) {
+        throw new Error(`${where}: set either \`component\` (interactive) or \`image\` (static), not both`);
+      }
+      if (!hasComponent && !hasImage) {
+        throw new Error(`${where}: gazette block must set \`component\` (interactive) or \`image\` (static)`);
+      }
+
+      figuresBySlug.set(slug, { number: counter, figId });
+
+      // Caption: whatever prose remains after the config block is removed. Shared
+      // by both figure kinds.
+      const caption = node.children;
+      const label = {
+        type: "gazetteLabel",
+        data: { hName: "span", hProperties: { className: ["gazette-figure-label"] } },
+        children: [{ type: "text", value: `Figure ${counter}.` }],
+      };
+      if (caption[0] && caption[0].type === "paragraph") {
+        caption[0].children.unshift(label, { type: "text", value: " " });
+      } else {
+        caption.unshift({ type: "paragraph", children: [label, { type: "text", value: " " }] });
+      }
+      const figcaption = { type: "gazetteCaption", data: { hName: "figcaption" }, children: caption };
+
+      // Optional breakout width (`max-width=90vw`) applies to either kind: it lets
+      // a figure grow wider than the text column (up to that fraction of the
+      // rendering surface), staying centered and leaving surrounding content
+      // untouched. Only vw values are accepted; the magnitude is emitted unit-less
+      // (--gazette-fig-vw) so each target binds it to the right unit — viewport
+      // (vw) for static, host container (cqw) for next.
+      const figProps = { id: figId, className: ["gazette-figure"] };
+      const rawMaxWidth = attrs["max-width"];
+      if (rawMaxWidth != null && String(rawMaxWidth).trim() !== "") {
+        const m = String(rawMaxWidth).trim().match(/^(\d+(?:\.\d+)?)vw$/);
+        if (!m) {
+          throw new Error(
+            `${where}: max-width must be a vw value like 90vw (got ${JSON.stringify(rawMaxWidth)})`
+          );
+        }
+        figProps.className.push("gazette-figure--wide");
+        figProps.style = `--gazette-fig-vw: ${m[1]}`;
+      }
+      node.data = { hName: "figure", hProperties: figProps };
+
+      // --- Static figure: one <img>, no mount, no island, no hydration. ---
+      if (hasImage) {
+        if (!IMAGE_RE.test(config.image)) {
+          throw new Error(
+            `${where}: \`image\` must be an image file (png/jpg/jpeg/gif/webp/avif/svg; got "${config.image}")`
+          );
+        }
+        const image = {
+          type: "gazetteImage",
+          data: {
+            hName: "img",
+            hProperties: { className: ["gazette-figure-img"], src: resolveFigureAsset(config.image), alt: "" },
+          },
+          children: [],
+        };
+        node.children = [image, figcaption];
+        return;
+      }
+
+      // --- Interactive figure: a component island over a static fallback. ---
+      const component = config.component;
+      if (!component.endsWith(".js")) {
+        throw new Error(`${where}: \`component\` must end in .js (got "${component}")`);
+      }
+
+      // data: { key: <.json file> } → render receives { key: parsedJson }.
+      const dataConfig = config.data && typeof config.data === "object" ? config.data : {};
+      const data = {};
+      for (const [key, value] of Object.entries(dataConfig)) {
+        if (typeof value !== "string" || !value.endsWith(".json")) {
+          throw new Error(`${where}: data["${key}"] must be a .json filename (got ${JSON.stringify(value)})`);
+        }
+        data[key] = { name: value, path: resolveDataPath(value) };
+      }
+
+      const opts = config.opts && typeof config.opts === "object" ? config.opts : {};
+
+      // `lightDom: true` opts this island out of the `next` target's shadow
+      // root: the component is mounted in the light DOM and projected back into
+      // the figure's place with a <slot>. Use it for embedded apps (e.g. a
+      // whole SPA) that rely on document-level queries, event targeting or
+      // portals, which a shadow boundary breaks. No effect on `static`/`pdf`
+      // (which have no shadow root).
+      const lightDom = config.lightDom === true;
+
+      islands.push({
+        figId,
+        slug,
+        mountId,
+        component,
+        modulePath: `figures/${component}`,
+        data,
+        fallback: `figures/${slug}.png`,
+        opts,
+        lightDom,
+      });
+
+      const mountClasses = lightDom ? ["gazette-mount", "gazette-mount--light"] : ["gazette-mount"];
+      const mount = {
+        type: "gazetteMount",
+        data: { hName: "div", hProperties: { id: mountId, className: mountClasses } },
+        children: [],
+      };
+      const img = {
+        type: "gazetteFallback",
+        data: { hName: "img", hProperties: { className: ["gazette-static-fallback"], src: `figures/${slug}.png`, alt: "" } },
+        children: [],
+      };
+      const hydration = {
+        type: "gazetteHydration",
+        data: { hName: "gazette-hydration", hProperties: { "data-mount": mountId } },
+        children: [],
+      };
+      node.children = [mount, img, figcaption, hydration];
+    });
+  };
+}

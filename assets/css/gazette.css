@@ -1,0 +1,455 @@
+/*
+ * press.css — the structural layer.
+ * Direct-perception structure: open forms, hairline rules, a single readable
+ * measure, mono for labels and numerics. References ONLY the token interface
+ * (var(--…)); carries no brand values. Swap tokens.css to re-skin.
+ */
+
+html {
+  font-size: 18px;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * (c) Donut scope — every rule below applies inside .gazette-paper but STOPS at
+ * any .gazette-mount--light boundary (a `lightDom` figure, e.g. an embedded
+ * SPA). Content mounted there is excluded from gazette's reset, bare-element
+ * styles and inherited typography, so it renders as it would outside gazette —
+ * matching the `next` target, where the shadow root gives the same isolation
+ * for free. The boundary reset (.gazette-mount--light { all: revert }) near the
+ * end of the file stops properties inherited from body/:scope crossing in.
+ * Note: the shadowify/rem transforms (src/assets/resolve.js) only touch
+ * :root/html/body and rem units, so @scope and :scope pass through unchanged
+ * into the next target's shadow stylesheet.
+ */
+@scope (.gazette-paper) to (.gazette-mount--light) {
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:scope {
+  box-sizing: border-box;
+  max-width: var(--max-paper-width);
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+
+  /*
+   * Inherited base typography is declared here (on the in-document wrapper),
+   * not only on body/:host. In the `next` (shadow) target body is rewritten to
+   * :host, i.e. the shadow host element — which lives in the embedding page's
+   * tree, so the page's own rules (e.g. a `* { font-family }` reset) override
+   * the shadow's :host declarations for that element, and content that merely
+   * inherits would pick up the page's font/weight. .gazette-paper is inside the
+   * shadow tree and unreachable by outer selectors, so declaring the inherited
+   * base here makes all descendants inherit gazette's values in any host. The
+   * values mirror the body rule above; non-inherited page-box props (margin,
+   * background) stay on body.
+   */
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- Front matter ---------- */
+.gazette-frontmatter {
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.gazette-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 1.25rem;
+  letter-spacing: 0.0em;
+}
+
+.gazette-authors {
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.gazette-author:not(:last-child)::after {
+  content: ",";
+  margin-right: 0.4em;
+}
+
+.gazette-author sup {
+  font-family: var(--serif);
+  font-size: 0.62em;
+  color: var(--ink-muted);
+  padding-left: 0.1em;
+}
+
+.gazette-affiliations {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.gazette-affiliation {
+  margin: 0.1rem 0;
+}
+
+.gazette-affiliation sup {
+  font-family: var(--serif);
+  padding-right: 0.15em;
+}
+
+/* "Download PDF" link under the affiliations (frontmatter `pdf-download: true`). */
+.gazette-pdf-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-top: 1rem;
+  font-family: var(--serif);
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.gazette-pdf-download:hover {
+  color: var(--ink);
+}
+
+.gazette-pdf-icon {
+  flex: none;
+}
+
+/* Date sits above the title, right-aligned against the measure. */
+.gazette-date {
+  text-align: right;
+  margin-bottom: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  font-family: var(--serif);
+}
+
+/* ---------- Headings ---------- */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  margin: 2.5rem 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--line);
+}
+
+h3 {
+  font-size: 1.2rem;
+}
+
+h4 {
+  font-size: 1.02rem;
+  color: var(--ink-fill);
+}
+
+/* ---------- Prose ---------- */
+p {
+  margin: 1rem 0;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--ink-muted);
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--ink);
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+/* Inline `:trigger` controls: borderless prose buttons that drive a figure's
+   update(). They sit in the run of text, so they inherit the prose font/size and
+   read as a tinted chip rather than a UA button. */
+.gazette-trigger {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: var(--trigger-bg);
+  color: inherit;
+  font: inherit;
+  padding: 0.05em 0.35em;
+  border-radius: 0.25em;
+  cursor: pointer;
+}
+
+.gazette-trigger:hover {
+  filter: brightness(0.96);
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+ul,
+ol {
+  margin: 1rem 0;
+  padding-left: 1.6rem;
+}
+
+li {
+  margin: 0.3rem 0;
+}
+
+blockquote {
+  margin: 1.25rem 0;
+  padding: 0 0 0 1.2rem;
+  border-left: 2px solid var(--line);
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2.5rem 0;
+}
+
+/* ---------- Code ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--wash);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+pre {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  background: var(--wash);
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: 1rem 1rem;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+/* ---------- Tables ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.92rem;
+}
+
+th {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  text-align: left;
+}
+
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ---------- Figures ---------- */
+.gazette-figure {
+  margin: 2.5rem 0;
+}
+
+.gazette-mount {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+}
+
+/* Breakout figures (`:::figure{… max-width=90vw}`): grow wider than the text
+   column, centered, without shifting surrounding content. Width is
+   max(column, <n> × bleed-unit) — never narrower than the column, up to <n>% of
+   the rendering surface, and (since the bleed-unit is itself surface-relative)
+   never wider than it. --gazette-bleed-unit is 1vw here (viewport); the next
+   target overrides it to 1cqw against a container on :host (the host element). */
+.gazette-figure--wide {
+  width: max(100%, calc(var(--gazette-fig-vw, 100) * var(--gazette-bleed-unit, 1vw)));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Figure plot text uses the theme font. Observable Plot defaults to system-ui
+   via zero-specificity :where() rules, so this ordinary rule overrides it. */
+.gazette-mount svg {
+  font-family: var(--serif);
+}
+
+.gazette-figure-img,
+.gazette-static-fallback {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+figcaption {
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* Match the bold caption lead-in: same serif, weight, and ink. */
+.gazette-figure-label {
+  font-weight: 600;
+  color: var(--ink-fill);
+}
+
+figcaption strong {
+  color: var(--ink-fill);
+}
+
+/* ---------- References ---------- */
+.gazette-references {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.gazette-references h2 {
+  border: none;
+  font-size: 1.25rem;
+}
+
+.gazette-reference-list {
+  padding-left: 1.8rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.gazette-reference {
+  margin: 0.5rem 0;
+}
+
+.gazette-reference::marker {
+  font-family: var(--mono);
+  color: var(--ink-muted);
+}
+
+/* ---------- Acknowledgments ---------- */
+.gazette-acknowledgments {
+  font-size: 0.85rem;
+}
+
+.gazette-acknowledgments h2 {
+  font-size: 1.1rem;
+}
+
+/* ---------- Math ---------- */
+.katex {
+  font-size: 1.05em;
+}
+
+.math-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+} /* end (c) donut @scope */
+
+/* Donut boundary: a `lightDom` figure's mount. `all: revert` drops gazette's
+   inherited typography (font/color/line-height set on body/:scope) at this
+   element, so the embedded app starts from the user-agent baseline and brings
+   its own styles. Content inside the mount is already excluded from gazette's
+   scoped rules above. */
+.gazette-mount--light {
+  all: revert;
+}
+
+/* ---------- Print ---------- */
+@page {
+  size: letter;
+  margin: 1in;
+}
+
+@media print {
+  html {
+    font-size: 10.5pt;
+  }
+  body {
+    background: var(--paper);
+  }
+  .gazette-paper {
+    max-width: none;
+    padding: 0;
+  }
+  a {
+    text-decoration: none;
+    color: var(--ink);
+  }
+  /* Print the baked static figure (exported screenshot or author image); the
+     live interactive mount can't lay out for the print page. */
+  .gazette-mount {
+    display: none !important;
+  }
+  .gazette-static-fallback {
+    display: block !important;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+  .gazette-figure {
+    break-inside: avoid;
+  }
+  /* No viewport breakout in print: figures lie within the page text block. */
+  .gazette-figure--wide {
+    width: 100%;
+    left: auto;
+    transform: none;
+  }
+  .gazette-figure img {
+    max-width: 100%;
+    height: auto;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+}

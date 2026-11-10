@@ -319,11 +319,16 @@ td {
   font-family: var(--serif);
 }
 
+/* Scale an image down to fit its figure, but never up past its intrinsic pixel
+   size: `width: auto` keeps the natural width, `max-width: 100%` caps it to the
+   figure box, and a smaller image stays centered rather than stretched. */
 .gazette-figure-img,
 .gazette-static-fallback {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
+  margin-inline: auto;
 }
 
 figcaption {

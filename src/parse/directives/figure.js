@@ -64,6 +64,25 @@ function resolveFigureAsset(file) {
   return `figures/${file.replace(/^\.\//, "")}`;
 }
 
+// An absolute reference the author owns the full path of — an external URL
+// (scheme:, protocol-relative //host, or data:) or a site-root path (/…). These
+// are left untouched; only project-relative image sources are resolved into the
+// figures/ tree.
+function isAbsoluteUrl(src) {
+  return /^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith("//") || src.startsWith("/");
+}
+
+// Resolve a plain Markdown image's `src` the same way a static figure's `image:`
+// resolves: project-relative sources land under figures/. Absolute URLs and
+// sources already under figures/ are passed through unchanged.
+function resolveImageSrc(src) {
+  if (!src) return src;
+  if (isAbsoluteUrl(src)) return src;
+  const clean = src.replace(/^\.\//, "");
+  if (clean === "figures" || clean.startsWith("figures/")) return clean;
+  return resolveFigureAsset(src);
+}
+
 const IMAGE_RE = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
 
 function hasGazetteMeta(node) {
@@ -226,6 +245,74 @@ export function remarkFigures() {
         children: [],
       };
       node.children = [mount, img, figcaption, hydration];
+    });
+  };
+}
+
+// Non-whitespace children of a node: text nodes that are only whitespace (the
+// blank lines/indentation around a block image) don't count toward "the
+// paragraph is nothing but an image".
+function significantChildren(node) {
+  return (node.children || []).filter(
+    (c) => !(c.type === "text" && String(c.value || "").trim() === "")
+  );
+}
+
+// If `node` is an image, or a link wrapping a single image, return
+// { image, link } (link present only when the wrapper has a non-empty href).
+// Otherwise return null.
+function asFigureImage(node) {
+  if (!node) return null;
+  if (node.type === "image") return { image: node, link: null };
+  if (node.type === "link") {
+    const inner = significantChildren(node);
+    if (inner.length === 1 && inner[0].type === "image") {
+      const href = String(node.url || "").trim();
+      return { image: inner[0], link: href ? node : null };
+    }
+  }
+  return null;
+}
+
+// Lower a plain Markdown block image into a bare <figure> — no figcaption,
+// number, or cross-reference identity (those belong to `:::figure` directives).
+//
+// A paragraph whose only content is a single image, bare or wrapped in a link,
+// becomes a figure:
+//
+//   ![Filter on all metadata](filter-on-metadata.png)
+//   [![Filter on all metadata](filter-on-metadata.png)]()          → src figures/…
+//   [![Filter on all metadata](filter-on-metadata.png)](https://…) → clickable
+//
+// Output HTML:
+//   <figure class="gazette-figure">
+//     <img class="gazette-figure-img" src="figures/filter-on-metadata.png" alt="Filter on all metadata">
+//   </figure>
+//
+// The image's `src` resolves into figures/ exactly as a static figure's `image:`
+// does (absolute URLs pass through). An empty-href link wrapper (`[…]()`) is a
+// figure marker and is dropped; a real href keeps the image clickable. The alt
+// text is preserved verbatim — with no figcaption it is the figure's only
+// accessible description. Paragraphs that mix an image with other text, or hold
+// more than one image, are left as ordinary inline content.
+export function remarkMarkdownFigures() {
+  return (tree) => {
+    visit(tree, "paragraph", (node) => {
+      const kids = significantChildren(node);
+      if (kids.length !== 1) return;
+      const found = asFigureImage(kids[0]);
+      if (!found) return;
+
+      const { image, link } = found;
+      image.url = resolveImageSrc(image.url);
+      image.data = image.data || {};
+      image.data.hProperties = {
+        ...(image.data.hProperties || {}),
+        className: ["gazette-figure-img"],
+      };
+
+      node.data = { hName: "figure", hProperties: { className: ["gazette-figure"] } };
+      node.children = [link || image];
     });
   };
 }

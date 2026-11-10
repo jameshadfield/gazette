@@ -111,6 +111,36 @@ targets, and the **host element** in the `next` embed (the shadow root makes `:h
 a size-query container, so a wide figure never spills out of wherever the embed is
 placed). In print the breakout is dropped and the figure returns to the text block.
 
+### Plain image figures
+
+Not every figure needs a directive, a caption, or a cross-reference. A paragraph
+whose only content is a single Markdown image — bare, or wrapped in a link — is
+rendered as a bare `<figure>` (no `<figcaption>`, no figure number):
+
+```markdown
+![Filter on all metadata](filter-on-metadata.png)
+[![Filter on all metadata](filter-on-metadata.png)]()
+[![Filter on all metadata](filter-on-metadata.png)](https://example.com)
+```
+
+all produce:
+
+```html
+<figure class="gazette-figure">
+  <img class="gazette-figure-img" src="figures/filter-on-metadata.png" alt="Filter on all metadata">
+</figure>
+```
+
+- The `src` resolves into `figures/` exactly as a static figure's `image:` does
+  (`name.png → figures/name.png`, `sub/name.png → figures/sub/name.png`). Absolute
+  URLs (`https://…`, `/…`) are passed through untouched.
+- An empty-href wrapper (`[…]()`) is just a figure marker and is dropped; a real
+  href keeps the image clickable (`<a href>` is preserved around the `<img>`).
+- The alt text is kept verbatim — with no caption it is the figure's only
+  accessible description, so write it to describe the image.
+- Only a paragraph that is *nothing but* one image qualifies. An image mixed with
+  text, or more than one image in a paragraph, stays ordinary inline content.
+
 ### Embedded apps (`lightDom`)
 
 Set `lightDom: true` in the YAML block for a component that is a self-contained

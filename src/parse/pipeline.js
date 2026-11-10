@@ -13,7 +13,7 @@ import rehypeKatex from "rehype-katex";
 import rehypeStringify from "rehype-stringify";
 
 import { remarkExtractFrontmatter } from "./frontmatter.js";
-import { remarkFigures } from "./directives/figure.js";
+import { remarkFigures, remarkMarkdownFigures } from "./directives/figure.js";
 import { remarkTriggers } from "./directives/trigger.js";
 import { rehypeResolveRefs } from "./resolve-refs.js";
 
@@ -77,6 +77,7 @@ export async function parseDocument({ markdown, bib = {}, warnings = [] }) {
     .use(remarkMath)
     .use(remarkDirective)
     .use(remarkFigures)
+    .use(remarkMarkdownFigures)
     .use(remarkTriggers)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeSlug)

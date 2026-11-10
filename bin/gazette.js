@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { buildCommand } from "../src/commands/build.js";
 import { devCommand } from "../src/commands/dev.js";
 import { snapshotCommand } from "../src/commands/snapshot.js";
+import { abstractCommand } from "../src/commands/abstract.js";
 
 const program = new Command();
 
@@ -59,6 +60,19 @@ program
   .action(async (input, opts) => {
     try {
       await snapshotCommand(input, opts);
+    } catch (err) {
+      console.error(`gazette: ${err.message}`);
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("abstract")
+  .description("Print the document's abstract (its first paragraph) as plain Markdown")
+  .argument("<input>", "Markdown entry file")
+  .action(async (input, opts) => {
+    try {
+      await abstractCommand(input, opts);
     } catch (err) {
       console.error(`gazette: ${err.message}`);
       process.exitCode = 1;

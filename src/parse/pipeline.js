@@ -23,7 +23,7 @@ import { rehypeResolveRefs } from "./resolve-refs.js";
 // it, and renders as a literal ":" — which the ref resolver then matches. Code
 // spans and fenced code blocks are skipped so documentation like `[@fig:slug]`
 // is left verbatim.
-function escapeFigColons(md) {
+export function escapeFigColons(md) {
   let inFence = false;
   return md
     .split("\n")

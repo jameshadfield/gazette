@@ -34,6 +34,7 @@
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
+    "remark-stringify": "^11.0.0",
     "sirv": "^3.0.1",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",

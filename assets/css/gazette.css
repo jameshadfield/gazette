@@ -23,14 +23,14 @@ body {
 
 /*
  * (c) Donut scope — every rule below applies inside .gazette-paper but STOPS at
- * any .gazette-mount--light boundary (a `lightDom` figure, e.g. an embedded
- * SPA). Content mounted there is excluded from gazette's reset, bare-element
- * styles and inherited typography, so it renders as it would outside gazette and
- * can bring its own CSS without the paper's cascade bleeding in. The boundary
- * reset (.gazette-mount--light { all: revert }) near the end of the file stops
- * properties inherited from body/:scope crossing in.
+ * any .gazette-mount--standalone boundary (a `standalone` figure, e.g. an
+ * embedded SPA). Content mounted there is excluded from gazette's reset,
+ * bare-element styles and inherited typography, so it renders as it would outside
+ * gazette and can bring its own CSS without the paper's cascade bleeding in. The
+ * boundary reset (.gazette-mount--standalone { all: revert }) near the end of the
+ * file stops properties inherited from body/:scope crossing in.
  */
-@scope (.gazette-paper) to (.gazette-mount--light) {
+@scope (.gazette-paper) to (.gazette-mount--standalone) {
 
 *,
 *::before,
@@ -388,12 +388,12 @@ figcaption strong {
 
 } /* end (c) donut @scope */
 
-/* Donut boundary: a `lightDom` figure's mount. `all: revert` drops gazette's
+/* Donut boundary: a `standalone` figure's mount. `all: revert` drops gazette's
    inherited typography (font/color/line-height set on body/:scope) at this
    element, so the embedded app starts from the user-agent baseline and brings
    its own styles. Content inside the mount is already excluded from gazette's
    scoped rules above. */
-.gazette-mount--light {
+.gazette-mount--standalone {
   all: revert;
 }
 

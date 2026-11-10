@@ -137,19 +137,19 @@ all produce:
 - Only a paragraph that is *nothing but* one image qualifies. An image mixed with
   text, or more than one image in a paragraph, stays ordinary inline content.
 
-### Embedded apps (`lightDom`)
+### Embedded apps (`standalone`)
 
-Set `lightDom: true` in the YAML block for a component that is a self-contained
+Set `standalone: true` in the YAML block for a component that is a self-contained
 app rather than a simple chart — one that brings its own CSS and expects to render
 on a plain page, not inside gazette's styled document.
 
 ```yaml gazette
 component: auspice-wrapper.js
-lightDom: true
+standalone: true
 ```
 
-The flag marks the figure's mount (`.gazette-mount--light`) as a style-isolation
-boundary. gazette's reset, bare-element rules and inherited typography are confined
+The flag marks the figure's mount (`.gazette-mount--standalone`) as a
+style-isolation boundary. gazette's reset, bare-element rules and inherited typography are confined
 to a donut scope that **stops** at that mount, so an embedded app brings its own
 styles without the paper's cascade bleeding in. (The scope uses CSS `@scope`; see
 `assets/css/gazette.css`.) It is a no-op for an ordinary chart component, which is

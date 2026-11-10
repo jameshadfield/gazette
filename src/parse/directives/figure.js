@@ -207,12 +207,12 @@ export function remarkFigures() {
 
       const opts = config.opts && typeof config.opts === "object" ? config.opts : {};
 
-      // `lightDom: true` marks this island's mount as a style-isolation boundary
-      // (the `.gazette-mount--light` class): gazette's reset, bare-element rules
-      // and inherited typography are confined to a donut `@scope` that stops at
-      // the mount, so an embedded app (e.g. a whole SPA that brings its own CSS)
+      // `standalone: true` marks this island's mount as a style-isolation boundary
+      // (the `.gazette-mount--standalone` class): gazette's reset, bare-element
+      // rules and inherited typography are confined to a donut `@scope` that stops
+      // at the mount, so an embedded app (e.g. a whole SPA that brings its own CSS)
       // renders without the paper's cascade bleeding in. See assets/css/gazette.css.
-      const lightDom = config.lightDom === true;
+      const standalone = config.standalone === true;
 
       islands.push({
         figId,
@@ -225,7 +225,7 @@ export function remarkFigures() {
         opts,
       });
 
-      const mountClasses = lightDom ? ["gazette-mount", "gazette-mount--light"] : ["gazette-mount"];
+      const mountClasses = standalone ? ["gazette-mount", "gazette-mount--standalone"] : ["gazette-mount"];
       const mount = {
         type: "gazetteMount",
         data: { hName: "div", hProperties: { id: mountId, className: mountClasses } },

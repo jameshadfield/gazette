@@ -19,8 +19,8 @@ function esc(s) {
 
 // A "Download PDF" link (download icon + label), rendered under the affiliations
 // when frontmatter sets `pdf-download: true`. The caller supplies the resolved
-// href (relative for `static`, base-path-absolute for `next`); the `pdf` target
-// passes none, so the link never appears in the printed document itself.
+// href (page-relative for `static`); the `pdf` target passes none, so the link
+// never appears in the printed document itself.
 function pdfDownloadLink(href) {
   const icon =
     `<svg class="gazette-pdf-icon" width="1em" height="1em" viewBox="0 0 24 24" fill="none" ` +

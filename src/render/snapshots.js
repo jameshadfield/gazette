@@ -4,8 +4,8 @@
 // This is the faithful replacement for the hand-supplied placeholder PNGs. A
 // real browser (not a jsdom/linkedom SVG shim) is used on purpose: components
 // may draw to <canvas> / WebGL, which only a real engine renders. The PNGs are
-// committed artifacts, so every target — the no-JS static page, the `next` SSR
-// fallback, and the `pdf` print — references the same real image.
+// committed artifacts, so every target — the no-JS static page and the `pdf`
+// print — references the same real image.
 //
 // Each figure is rendered in ISOLATION in a minimal harness page at a fixed
 // width (config.snapshot.width), so the output is deterministic and independent

@@ -3,7 +3,7 @@
 // headless Chrome and screenshotting it into the source `figures/` tree.
 //
 // Run this when a figure's component or data changes; the resulting PNGs are
-// committed and reused by every target (no-JS static, `next` SSR, `pdf` print).
+// committed and reused by every target (no-JS static, `pdf` print).
 import path from "node:path";
 import { loadConfig } from "../config.js";
 import { buildIR } from "./build.js";

@@ -16,7 +16,6 @@ export const VENDOR = {
   fontsDir: path.join(PACKAGE_ROOT, "assets", "fonts"),
   katexDir: path.join(PACKAGE_ROOT, "assets", "katex"),
   runtime: path.join(PACKAGE_ROOT, "runtime", "gazette-runtime.js"),
-  runtimeNextDir: path.join(PACKAGE_ROOT, "runtime", "next"),
   template: path.join(PACKAGE_ROOT, "templates", "page.html"),
 };
 
@@ -52,7 +51,6 @@ export function loadConfig(input, cli = {}) {
     outBase,
     themeDir,
     target,
-    basePath: cli.basePath || "",
     // --no-fallback-hide sets cli.fallbackHide === false (commander negation).
     hideFallback: cli.fallbackHide !== false,
     // Raster fallback snapshots (`gazette snapshot` / `build --snapshot`): the

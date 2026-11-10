@@ -155,8 +155,7 @@ export function remarkFigures() {
       // a figure grow wider than the text column (up to that fraction of the
       // rendering surface), staying centered and leaving surrounding content
       // untouched. Only vw values are accepted; the magnitude is emitted unit-less
-      // (--gazette-fig-vw) so each target binds it to the right unit — viewport
-      // (vw) for static, host container (cqw) for next.
+      // (--gazette-fig-vw) and the stylesheet binds it to the viewport (vw).
       const figProps = { id: figId, className: ["gazette-figure"] };
       const rawMaxWidth = attrs["max-width"];
       if (rawMaxWidth != null && String(rawMaxWidth).trim() !== "") {
@@ -208,12 +207,11 @@ export function remarkFigures() {
 
       const opts = config.opts && typeof config.opts === "object" ? config.opts : {};
 
-      // `lightDom: true` opts this island out of the `next` target's shadow
-      // root: the component is mounted in the light DOM and projected back into
-      // the figure's place with a <slot>. Use it for embedded apps (e.g. a
-      // whole SPA) that rely on document-level queries, event targeting or
-      // portals, which a shadow boundary breaks. No effect on `static`/`pdf`
-      // (which have no shadow root).
+      // `lightDom: true` marks this island's mount as a style-isolation boundary
+      // (the `.gazette-mount--light` class): gazette's reset, bare-element rules
+      // and inherited typography are confined to a donut `@scope` that stops at
+      // the mount, so an embedded app (e.g. a whole SPA that brings its own CSS)
+      // renders without the paper's cascade bleeding in. See assets/css/gazette.css.
       const lightDom = config.lightDom === true;
 
       islands.push({
@@ -225,7 +223,6 @@ export function remarkFigures() {
         data,
         fallback: `figures/${slug}.png`,
         opts,
-        lightDom,
       });
 
       const mountClasses = lightDom ? ["gazette-mount", "gazette-mount--light"] : ["gazette-mount"];

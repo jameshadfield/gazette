@@ -25,13 +25,10 @@ body {
  * (c) Donut scope — every rule below applies inside .gazette-paper but STOPS at
  * any .gazette-mount--light boundary (a `lightDom` figure, e.g. an embedded
  * SPA). Content mounted there is excluded from gazette's reset, bare-element
- * styles and inherited typography, so it renders as it would outside gazette —
- * matching the `next` target, where the shadow root gives the same isolation
- * for free. The boundary reset (.gazette-mount--light { all: revert }) near the
- * end of the file stops properties inherited from body/:scope crossing in.
- * Note: the shadowify/rem transforms (src/assets/resolve.js) only touch
- * :root/html/body and rem units, so @scope and :scope pass through unchanged
- * into the next target's shadow stylesheet.
+ * styles and inherited typography, so it renders as it would outside gazette and
+ * can bring its own CSS without the paper's cascade bleeding in. The boundary
+ * reset (.gazette-mount--light { all: revert }) near the end of the file stops
+ * properties inherited from body/:scope crossing in.
  */
 @scope (.gazette-paper) to (.gazette-mount--light) {
 
@@ -48,16 +45,11 @@ body {
   padding: 4rem 1.5rem 6rem;
 
   /*
-   * Inherited base typography is declared here (on the in-document wrapper),
-   * not only on body/:host. In the `next` (shadow) target body is rewritten to
-   * :host, i.e. the shadow host element — which lives in the embedding page's
-   * tree, so the page's own rules (e.g. a `* { font-family }` reset) override
-   * the shadow's :host declarations for that element, and content that merely
-   * inherits would pick up the page's font/weight. .gazette-paper is inside the
-   * shadow tree and unreachable by outer selectors, so declaring the inherited
-   * base here makes all descendants inherit gazette's values in any host. The
-   * values mirror the body rule above; non-inherited page-box props (margin,
-   * background) stay on body.
+   * Inherited base typography is declared here on the in-document wrapper, not
+   * only on body, so every descendant of the paper inherits gazette's values
+   * directly from .gazette-paper rather than relying on the surrounding page's
+   * body. The values mirror the body rule above; non-inherited page-box props
+   * (margin, background) stay on body.
    */
   color: var(--ink);
   font-family: var(--serif);
@@ -302,12 +294,11 @@ td {
 
 /* Breakout figures (`:::figure{… max-width=90vw}`): grow wider than the text
    column, centered, without shifting surrounding content. Width is
-   max(column, <n> × bleed-unit) — never narrower than the column, up to <n>% of
-   the rendering surface, and (since the bleed-unit is itself surface-relative)
-   never wider than it. --gazette-bleed-unit is 1vw here (viewport); the next
-   target overrides it to 1cqw against a container on :host (the host element). */
+   max(column, <n>vw) — never narrower than the column, up to <n>% of the
+   viewport, and never wider than it. --gazette-fig-vw carries the <n> set
+   per-figure by the figure directive. */
 .gazette-figure--wide {
-  width: max(100%, calc(var(--gazette-fig-vw, 100) * var(--gazette-bleed-unit, 1vw)));
+  width: max(100%, calc(var(--gazette-fig-vw, 100) * 1vw));
   position: relative;
   left: 50%;
   transform: translateX(-50%);

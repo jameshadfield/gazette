@@ -9,7 +9,6 @@ and rendered per target.
 There are a number of **targets**:
 
 * `static` produces a stand-alone HTML site suitable for GitHub Pages etc
-* `next` produces a modified HTML intended for use in Nextstrain.org's next.js site
 * `pdf` produces a PDF file via a headless browser
 
 ## Install
@@ -25,25 +24,24 @@ Requires Node ≥ 20. Pure ESM.
 
 ```sh
 gazette build    <input> --target static [options]
-gazette build    <input> --target next --base-path /gazette --out <public-dir>
 gazette build    <input> --target pdf             # → <root>/dist/paper.pdf
 gazette snapshot <input> [--only fig:slug]        # regenerate raster figure fallbacks
 gazette dev      <input> [--port 8080]
 ```
 
-`--target all` builds the `static`, `next`, and `pdf` targets in one pass.
+`--target all` builds the `static` and `pdf` targets in one pass.
 
 `<input>` is the **Markdown entry file**.
 
 Options: `--out <dir>`, `--bib <file>` (default `<root>/references.bib`),
 `--figures <dir>` (default `<root>/figures`), `--theme <dir>` (override
 `tokens.css` + optional `fonts/`), `--no-fallback-hide` (debug: keep the static
-fallback visible under the island), `--base-path <path>` (reserved for the
-next/pdf targets), `--snapshot` (regenerate raster fallbacks before building).
+fallback visible under the island), `--snapshot` (regenerate raster fallbacks
+before building).
 
 The `pdf` target and `gazette snapshot` need headless Chrome. `puppeteer` is an
 **optional dependency** (installed by default, but safe to skip on machines that
-only build `static`/`next`).
+only build `static`).
 
 ## Try the example
 
@@ -106,10 +104,8 @@ column, grows up to `<n>%` of the surface, and never overflows** it. The width i
 measured from the mount and passed to `render` automatically — no component change
 is needed, and the figure re-fits on resize.
 
-The reference surface differs per target: the **viewport** in the `static`/`pdf`
-targets, and the **host element** in the `next` embed (the shadow root makes `:host`
-a size-query container, so a wide figure never spills out of wherever the embed is
-placed). In print the breakout is dropped and the figure returns to the text block.
+The reference surface is the **viewport**. In print the breakout is dropped and
+the figure returns to the text block.
 
 ### Plain image figures
 
@@ -144,60 +140,20 @@ all produce:
 ### Embedded apps (`lightDom`)
 
 Set `lightDom: true` in the YAML block for a component that is a self-contained
-app rather than a simple chart — one that queries `document`, listens for clicks
-on `document` (e.g. click-outside-to-dismiss), or renders modals/portals into
-`document.body`. By default a figure's mount lives inside gazette's styling
-boundary, which breaks those document-level assumptions in the `next` target: its
-whole document is isolated in a shadow root, so `document.querySelector` can't see
-the mount, event targets are retargeted to the shadow host, and portals to
-`document.body` escape the paper's styles. With `lightDom: true`, the `next`
-runtime instead mounts the component in the **light DOM** and projects it back
-into the figure's place with a `<slot>`, so the component runs exactly as it would
-on a plain page while the rest of the paper keeps its shadow isolation.
+app rather than a simple chart — one that brings its own CSS and expects to render
+on a plain page, not inside gazette's styled document.
 
 ```yaml gazette
 component: auspice-wrapper.js
 lightDom: true
 ```
 
-The flag is a no-op on `static`/`pdf`, which have no shadow root — the component
-is already in the light DOM there. It does, however, protect the component from
-gazette's own global CSS on `static`: gazette's reset, bare-element rules and
-inherited typography are confined to a donut scope that stops at the light-DOM
-mount (`.gazette-mount--light`), so an embedded app brings its own styles without
-the paper's cascade bleeding in — matching the isolation the shadow root gives for
-free in `next`. (The scope uses CSS `@scope`; see `assets/css/gazette.css`.)
-
-## Embedding in Next.js (the `next` target)
-
-The `next` target compiles the same source into a bundle a host Next.js app
-(App Router, React 18) embeds — the whole document isolated in **one shadow
-root**, so its styles neither leak into the host app nor inherit from it.
-
-```sh
-gazette build examples/basic --target next --base-path /gazette --out examples/next/public
-# → public/gazette/{article.html, manifest.json, gazette.shadow.css, fonts/, assets/katex/, figures/}
-```
-
-The host reads the bundle at build time and renders two companion components
-(shipped in [`runtime/next/`](./runtime/next)):
-
-```tsx
-import { GazettePaper } from "gazette/next";
-// ...read public/gazette/{article.html, manifest.json} for this page...
-return <GazettePaper articleHtml={articleHtml} manifest={manifest} />;
-```
-
-`GazettePaper` (a server component) server-renders `article.html` into the light
-DOM — crawlable, printable, visible with no JS. `GazetteHydrator` (`'use client'`)
-then attaches the shadow root, loads `gazette.shadow.css`, moves the article
-inside, and hydrates each figure from the manifest (dynamic `import()` of the
-component module, data fetch, `render` with the measured width, `resize` +
-`gazette:update` wiring) — with trigger clicks and `#fig`/`#ref` anchor jumps
-scoped to the shadow root. A runnable host lives in
-[`examples/next/`](./examples/next) (see its README). `--base-path` is the URL
-prefix the bundle is served from (`public/<base-path>/`); the manifest's
-module/data/stylesheet URLs are rewritten against it.
+The flag marks the figure's mount (`.gazette-mount--light`) as a style-isolation
+boundary. gazette's reset, bare-element rules and inherited typography are confined
+to a donut scope that **stops** at that mount, so an embedded app brings its own
+styles without the paper's cascade bleeding in. (The scope uses CSS `@scope`; see
+`assets/css/gazette.css`.) It is a no-op for an ordinary chart component, which is
+happy to inherit the paper's typography.
 
 ## Raster fallbacks (`gazette snapshot`) and the `pdf` target
 
@@ -221,7 +177,7 @@ Each figure is rendered in isolation at a fixed width (default **800 px**,
 captured at **2×** for a crisp 1600 px-wide PNG) with the real theme CSS/fonts
 loaded, then the mount is screenshotted into the **source** `figures/` tree. The
 PNGs are committed artifacts, so every target reuses the same real image: the
-no-JS static page, the `next` SSR fallback, and the `pdf` print. Sizing flags:
+no-JS static page and the `pdf` print. Sizing flags:
 `--snapshot-width <px>`, `--snapshot-scale <n>`.
 
 Re-run `snapshot` (or build with `--snapshot`) whenever a component or its data
@@ -244,10 +200,10 @@ run `gazette snapshot` (or `gazette build --snapshot --target pdf`) first.
 ### Offering the PDF for download (`pdf-download`)
 
 Set `pdf-download: true` in the frontmatter to add a "Download PDF" link under
-the affiliations of the **`static`** and **`next`** pages (never in the printed
-PDF itself). These builds don't generate the PDF; they **assert** it already
+the affiliations of the **`static`** page (never in the printed PDF itself). This
+build doesn't generate the PDF; it **asserts** it already
 exists at `<out>/paper.pdf` (build it with `--target pdf`, or `--target all`,
-which builds `pdf` first) and copy it beside the page for download. As with the
+which builds `pdf` first) and copies it beside the page for download. As with the
 raster fallbacks, the shipped PDF is **not checked for staleness** — a page can
 link a `paper.pdf` that lags its current content, and these out-of-sync cases are
 left for a later pass; for now re-run the `pdf` build whenever the source changes.
@@ -283,11 +239,10 @@ src/
   bibtex.js             minimal BibTeX parser + numeric formatter
   commands/             build, dev, snapshot
   parse/                pipeline, frontmatter, directives/, resolve-refs
-  render/               document (frontmatter), target-static, target-next, target-pdf
+  render/               document (frontmatter), target-static, target-pdf
                         headless.js (shared Chrome engine), snapshots.js (raster fallbacks)
-  assets/               copy.js (vendoring), resolve.js (next base-path + shadow CSS)
+  assets/               copy.js (vendoring)
 runtime/gazette-runtime.js   trigger → gazette:update delegation (static target)
-runtime/next/           GazettePaper + GazetteHydrator (next target companions)
 assets/                 tokens.css, gazette.css, print.css, fonts, katex (document chrome, vendored)
 templates/page.html     static HTML shell
 examples/basic/         demo project

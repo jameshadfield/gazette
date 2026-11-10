@@ -3,7 +3,6 @@ import { Command } from "commander";
 import { buildCommand } from "../src/commands/build.js";
 import { devCommand } from "../src/commands/dev.js";
 import { snapshotCommand } from "../src/commands/snapshot.js";
-import { runtimeCommand } from "../src/commands/runtime.js";
 
 const program = new Command();
 
@@ -15,9 +14,8 @@ program
 program
   .command("build")
   .argument("<input>", "Markdown entry file")
-  .option("--target <target>", "static | next | pdf | all", "static")
+  .option("--target <target>", "static | pdf | all", "static")
   .option("--out <dir>", "output directory (default: <root>/dist)")
-  .option("--base-path <path>", "asset base path (next/static)")
   .option("--bib <file>", "BibTeX file (default: <root>/references.bib)")
   .option("--figures <dir>", "figures source dir (default: <root>/figures)")
   .option("--theme <dir>", "theme-override dir (tokens.css + optional fonts/)")
@@ -61,20 +59,6 @@ program
   .action(async (input, opts) => {
     try {
       await snapshotCommand(input, opts);
-    } catch (err) {
-      console.error(`gazette: ${err.message}`);
-      process.exitCode = 1;
-    }
-  });
-
-program
-  .command("runtime")
-  .description("Copy a target's companion runtime components into a project")
-  .option("--target <target>", "next", "next")
-  .option("--out <dir>", "destination directory for the components")
-  .action(async (opts) => {
-    try {
-      await runtimeCommand(opts);
     } catch (err) {
       console.error(`gazette: ${err.message}`);
       process.exitCode = 1;

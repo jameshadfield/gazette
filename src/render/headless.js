@@ -3,8 +3,8 @@
 // sit on top of this: launch a browser, load some HTML, capture a PNG or a PDF.
 //
 // puppeteer is an OPTIONAL dependency and is imported lazily, so ordinary
-// `static`/`next` builds — and `npm install` on machines that never render a
-// PDF or regenerate fallbacks — don't pay for a bundled Chromium.
+// `static` builds — and `npm install` on machines that never render a PDF or
+// regenerate fallbacks — don't pay for a bundled Chromium.
 import http from "node:http";
 import sirv from "sirv";
 

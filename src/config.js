@@ -43,12 +43,17 @@ export function loadConfig(input, cli = {}) {
 
   const target = (cli.target || "static").toLowerCase();
 
+  // The built PDF and the static page's "Download PDF" link both take their name
+  // from the Markdown entry file: foo.md -> foo.pdf.
+  const pdfName = `${path.basename(entry, path.extname(entry))}.pdf`;
+
   return {
     rootDir,
     entry,
     figuresDir,
     bibPath,
     outBase,
+    pdfName,
     themeDir,
     target,
     // --no-fallback-hide sets cli.fallbackHide === false (commander negation).

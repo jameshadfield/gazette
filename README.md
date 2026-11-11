@@ -24,7 +24,7 @@ Requires Node ≥ 20. Pure ESM.
 
 ```sh
 gazette build    <input> --target static [options]
-gazette build    <input> --target pdf             # → <root>/dist/paper.pdf
+gazette build    <input> --target pdf             # → <root>/dist/<input>.pdf
 gazette snapshot <input> [--only fig:slug]        # regenerate raster figure fallbacks
 gazette dev      <input> [--port 8080]
 ```
@@ -191,6 +191,8 @@ responsibility to re-snapshot.
 gazette build examples/basic/paper.md --target pdf   # → examples/basic/dist/paper.pdf
 ```
 
+The PDF is named after the Markdown entry file (`foo.md` → `foo.pdf`).
+
 The PDF reuses the whole HTML pipeline: it renders the **no-JS** article (figures
 show their baked raster fallback, no hydration), links a print stylesheet, and
 prints the page through headless Chrome. Because it depends on the fallbacks, the
@@ -202,10 +204,10 @@ run `gazette snapshot` (or `gazette build --snapshot --target pdf`) first.
 Set `pdf-download: true` in the frontmatter to add a "Download PDF" link under
 the affiliations of the **`static`** page (never in the printed PDF itself). This
 build doesn't generate the PDF; it **asserts** it already
-exists at `<out>/paper.pdf` (build it with `--target pdf`, or `--target all`,
+exists at `<out>/<entry>.pdf` (build it with `--target pdf`, or `--target all`,
 which builds `pdf` first) and copies it beside the page for download. As with the
 raster fallbacks, the shipped PDF is **not checked for staleness** — a page can
-link a `paper.pdf` that lags its current content, and these out-of-sync cases are
+link a PDF that lags its current content, and these out-of-sync cases are
 left for a later pass; for now re-run the `pdf` build whenever the source changes.
 
 ## How it works

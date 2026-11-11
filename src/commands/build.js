@@ -32,9 +32,10 @@ export async function buildIR(config, warnings) {
   return { html, data };
 }
 
-// The built PDF lives at <outBase>/paper.pdf (written by the `pdf` target).
+// The built PDF lives at <outBase>/<config.pdfName> (written by the `pdf`
+// target); its name derives from the Markdown entry file (foo.md -> foo.pdf).
 function pdfSource(config) {
-  return path.join(config.outBase, "paper.pdf");
+  return path.join(config.outBase, config.pdfName);
 }
 
 // When frontmatter sets `pdf-download: true`, the `static` build surfaces
@@ -61,7 +62,7 @@ async function buildStatic(config, ir) {
     html: ir.html,
     data: ir.data,
     hideFallback: config.hideFallback,
-    pdfHref: wantPdf ? "paper.pdf" : undefined,
+    pdfHref: wantPdf ? config.pdfName : undefined,
   });
   const template = fs.readFileSync(VENDOR.template, "utf8");
   const title = (ir.data.frontmatter && ir.data.frontmatter.title) || "Untitled";
@@ -70,7 +71,7 @@ async function buildStatic(config, ir) {
   await fs.promises.mkdir(outDir, { recursive: true });
   await fs.promises.writeFile(path.join(outDir, "index.html"), page);
   await copyStaticAssets({ outDir, figuresDir: config.figuresDir, themeDir: config.themeDir });
-  if (wantPdf) await fs.promises.copyFile(pdfSource(config), path.join(outDir, "paper.pdf"));
+  if (wantPdf) await fs.promises.copyFile(pdfSource(config), path.join(outDir, config.pdfName));
   return outDir;
 }
 

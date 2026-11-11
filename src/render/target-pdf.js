@@ -79,7 +79,7 @@ export async function buildPdf(config, ir) {
     );
 
     await fs.promises.mkdir(config.outBase, { recursive: true });
-    const outPath = path.join(config.outBase, "paper.pdf");
+    const outPath = path.join(config.outBase, config.pdfName);
     await fs.promises.writeFile(outPath, pdf);
     return outPath;
   } finally {

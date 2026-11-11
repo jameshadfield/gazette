@@ -56,7 +56,11 @@ export async function devCommand(input, cli) {
     serve(req, res);
   });
 
-  server.listen(port, () => {
+  // Bind to loopback only: the dev server has no access control and serves the
+  // built site (plus a live-reload SSE endpoint), so it must not be reachable
+  // from the LAN. The headless snapshot/pdf server (headless.js) binds 127.0.0.1
+  // for the same reason.
+  server.listen(port, "127.0.0.1", () => {
     console.log(`gazette dev: serving ${path.relative(process.cwd(), outDir)} at http://localhost:${port}`);
     console.log("gazette dev: watching for changes (Ctrl+C to stop)");
   });

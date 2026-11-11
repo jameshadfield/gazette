@@ -17,6 +17,21 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
+// Author-supplied link targets (e.g. affiliation URLs) must not smuggle an
+// executable scheme like `javascript:`. Relative URLs and anchors (no scheme)
+// are allowed; a URL with a scheme is allowed only for http/https/mailto.
+// Tab/newline/CR are stripped first because the browser's URL parser ignores
+// them, so `java\tscript:` would otherwise slip past a naive scheme check.
+// Returns "" for a rejected URL, so the caller falls back to plain text.
+function safeUrl(url) {
+  const s = String(url ?? "").replace(/[\t\r\n]/g, "").trim();
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) {
+    // Has a scheme — permit only the safe ones.
+    if (!/^(?:https?|mailto):/i.test(s)) return "";
+  }
+  return s;
+}
+
 // A "Download PDF" link (download icon + label), rendered under the affiliations
 // when frontmatter sets `pdf-download: true`. The caller supplies the resolved
 // href (page-relative for `static`); the `pdf` target passes none, so the link
@@ -60,8 +75,9 @@ export function renderFrontmatter(fm = {}, { pdfHref } = {}) {
   if (affiliations.length) {
     const lis = affiliations
       .map((a, i) => {
-        const name = a.url
-          ? `<a href="${esc(a.url)}">${esc(a.name)}</a>`
+        const href = safeUrl(a.url);
+        const name = href
+          ? `<a href="${esc(href)}">${esc(a.name)}</a>`
           : esc(a.name);
         return `<li class="gazette-affiliation"><sup>${i + 1}</sup>${name}</li>`;
       })

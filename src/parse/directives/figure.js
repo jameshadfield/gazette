@@ -50,6 +50,24 @@
 import { visit } from "unist-util-visit";
 import yaml from "js-yaml";
 
+// Author-supplied asset references (component, data, image) are resolved under
+// figures/ and emitted into the page as import()/fetch()/src URLs. Reject any
+// value that would escape the figures/ tree or name a remote resource: a URL
+// scheme, a protocol-relative `//host`, an absolute path, a `..` segment, or a
+// backslash. Without this a value like `../../secret.json` or
+// `https://evil.example/x.js` would be written verbatim into the output.
+function assertSafeRelPath(where, label, file) {
+  const f = String(file);
+  if (/^[a-z][a-z0-9+.-]*:/i.test(f) || f.startsWith("//")) {
+    throw new Error(`${where}: ${label} must be a local path under figures/, not a URL (got ${JSON.stringify(file)})`);
+  }
+  if (f.startsWith("/") || f.includes("\\") || /(^|\/)\.\.(\/|$)/.test(f)) {
+    throw new Error(
+      `${where}: ${label} must stay within figures/ — no absolute paths, "..", or backslashes (got ${JSON.stringify(file)})`
+    );
+  }
+}
+
 // A bare filename resolves under figures/data/; a path with a slash is taken
 // relative to the figures root (e.g. shared/palette.json, lib/foo.json).
 function resolveDataPath(file) {
@@ -177,6 +195,7 @@ export function remarkFigures() {
             `${where}: \`image\` must be an image file (png/jpg/jpeg/gif/webp/avif/svg; got "${config.image}")`
           );
         }
+        assertSafeRelPath(where, "`image`", config.image);
         const image = {
           type: "gazetteImage",
           data: {
@@ -194,6 +213,7 @@ export function remarkFigures() {
       if (!component.endsWith(".js")) {
         throw new Error(`${where}: \`component\` must end in .js (got "${component}")`);
       }
+      assertSafeRelPath(where, "`component`", component);
 
       // data: { key: <.json file> } → render receives { key: parsedJson }.
       const dataConfig = config.data && typeof config.data === "object" ? config.data : {};
@@ -202,6 +222,7 @@ export function remarkFigures() {
         if (typeof value !== "string" || !value.endsWith(".json")) {
           throw new Error(`${where}: data["${key}"] must be a .json filename (got ${JSON.stringify(value)})`);
         }
+        assertSafeRelPath(where, `data["${key}"]`, value);
         data[key] = { name: value, path: resolveDataPath(value) };
       }
 

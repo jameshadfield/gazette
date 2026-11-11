@@ -3,16 +3,33 @@
 // the one new gazette:update listener line from the extended render contract).
 import { renderFrontmatter } from "./document.js";
 
+// Serialize a value to JSON that is safe to embed inside an inline <script>.
+// JSON.stringify does not escape `/`, so a string containing `</script>` would
+// otherwise close the script element (the HTML parser ends a <script> at the
+// first literal `</script>` regardless of JS string context) and inject markup.
+// Escaping `<`/`>` (and the U+2028/U+2029 line terminators, which are invalid in
+// JS string literals) keeps the payload inside the script.
+function jsonForScript(value) {
+  const LS = String.fromCharCode(0x2028);
+  const PS = String.fromCharCode(0x2029);
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .split(LS).join("\\u2028")
+    .split(PS).join("\\u2029");
+}
+
 // Inline hydration script for one island, injected in place of the figure's
 // <gazette-hydration> placeholder. Paths are relative (./figures/…) so the page
 // is portable. `data` is assembled as { key: parsedJson } from the figure's
-// named datasets.
+// named datasets. Every author-controlled value embedded here (opts, data keys,
+// data paths) goes through jsonForScript so it cannot break out of the <script>.
 function inlineScript(island, hideFallback) {
-  const optsJson = JSON.stringify(island.opts || {});
+  const optsJson = jsonForScript(island.opts || {});
   const entries = Object.entries(island.data || {});
   const dataBlock = entries.length
     ? `const data = {\n${entries
-        .map(([key, d]) => `  ${JSON.stringify(key)}: await fetch("./${d.path}").then((r) => r.json()),`)
+        .map(([key, d]) => `  ${jsonForScript(key)}: await fetch(${jsonForScript(`./${d.path}`)}).then((r) => r.json()),`)
         .join("\n")}\n};`
     : `const data = {};`;
   const hideBlock = hideFallback
@@ -23,7 +40,7 @@ if (fallback) fallback.style.display = "none";`
   // The host measures the mount and passes `width` into opts so the component
   // need not read layout itself (works under a DOM shim for SSR, and matches the
   // width handed to resize). An explicit author `width` in opts still wins.
-  return `<script type="module">import { render } from "./${island.modulePath}";
+  return `<script type="module">import { render } from ${jsonForScript(`./${island.modulePath}`)};
 const mount = document.getElementById("${island.mountId}");
 ${dataBlock}
 const inst = render(mount, data, Object.assign({ mode: "inline", width: mount.clientWidth }, ${optsJson}));
